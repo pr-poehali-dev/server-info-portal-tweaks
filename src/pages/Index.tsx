@@ -46,9 +46,7 @@ export default function Index() {
               <Icon name="Zap" size={14} className="mr-1" />
               Версия 2.0
             </Badge>
-            <h2 className="text-5xl font-bold mb-6 bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
-              Добро пожаловать на ServerHub
-            </h2>
+            <h2 className="text-5xl font-bold mb-6 bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">добро пожаловать в поддержку Russian Town</h2>
             <p className="text-xl text-muted-foreground mb-8">
               Официальный портал игрового сервера. Присоединяйся к сообществу, участвуй в обсуждениях и следи за новостями!
             </p>
