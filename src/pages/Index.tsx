@@ -1,148 +1,10 @@
-import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
 import Icon from "@/components/ui/icon";
-import { useToast } from "@/hooks/use-toast";
-
-interface User {
-  username: string;
-  nickname: string;
-  avatar: string;
-}
-
-interface Post {
-  id: string;
-  author: User;
-  title: string;
-  content: string;
-  category: string;
-  replies: number;
-  views: number;
-  timestamp: Date;
-  isPinned?: boolean;
-}
-
-const CATEGORIES = [
-  { id: "discussions", name: "Обсуждения", icon: "MessageSquare" },
-  { id: "announcements", name: "Объявления", icon: "Megaphone" },
-  { id: "news", name: "Новости", icon: "Newspaper" },
-  { id: "faq", name: "FAQ", icon: "HelpCircle" },
-  { id: "support", name: "Помощь", icon: "LifeBuoy" }
-];
 
 export default function Index() {
-  const { toast } = useToast();
-  const [currentUser, setCurrentUser] = useState<User | null>(() => {
-    const saved = localStorage.getItem("currentUser");
-    return saved ? JSON.parse(saved) : null;
-  });
-  
-  const [posts, setPosts] = useState<Post[]>(() => {
-    const saved = localStorage.getItem("forumPosts");
-    if (saved) {
-      return JSON.parse(saved).map((p: Post) => ({
-        ...p,
-        timestamp: new Date(p.timestamp)
-      }));
-    }
-    return [
-      {
-        id: "1",
-        author: { username: "admin", nickname: "Администратор", avatar: "A" },
-        title: "Добро пожаловать на форум!",
-        content: "Здесь вы можете обсуждать все, что связано с сервером.",
-        category: "announcements",
-        replies: 5,
-        views: 120,
-        timestamp: new Date(),
-        isPinned: true
-      }
-    ];
-  });
-
-  const [selectedCategory, setSelectedCategory] = useState("discussions");
-  const [authMode, setAuthMode] = useState<"login" | "register">("login");
-  const [authForm, setAuthForm] = useState({ username: "", password: "", nickname: "" });
-  const [newPost, setNewPost] = useState({ title: "", content: "", category: "discussions" });
-  const [isAuthOpen, setIsAuthOpen] = useState(false);
-  const [isNewPostOpen, setIsNewPostOpen] = useState(false);
-
-  const saveToLocalStorage = (key: string, data: any) => {
-    localStorage.setItem(key, JSON.stringify(data));
-  };
-
-  const handleAuth = () => {
-    if (!authForm.username || !authForm.password) {
-      toast({ title: "Ошибка", description: "Заполните все поля", variant: "destructive" });
-      return;
-    }
-
-    if (authMode === "register" && !authForm.nickname) {
-      toast({ title: "Ошибка", description: "Укажите никнейм", variant: "destructive" });
-      return;
-    }
-
-    const user: User = {
-      username: authForm.username,
-      nickname: authMode === "register" ? authForm.nickname : authForm.username,
-      avatar: authForm.username[0].toUpperCase()
-    };
-
-    setCurrentUser(user);
-    saveToLocalStorage("currentUser", user);
-    setIsAuthOpen(false);
-    toast({
-      title: authMode === "register" ? "Регистрация успешна!" : "Вход выполнен!",
-      description: `Добро пожаловать, ${user.nickname}!`
-    });
-    setAuthForm({ username: "", password: "", nickname: "" });
-  };
-
-  const handleLogout = () => {
-    setCurrentUser(null);
-    localStorage.removeItem("currentUser");
-    toast({ title: "Выход выполнен", description: "До скорой встречи!" });
-  };
-
-  const handleCreatePost = () => {
-    if (!currentUser) {
-      toast({ title: "Ошибка", description: "Войдите в систему для создания постов", variant: "destructive" });
-      return;
-    }
-
-    if (!newPost.title || !newPost.content) {
-      toast({ title: "Ошибка", description: "Заполните заголовок и содержание", variant: "destructive" });
-      return;
-    }
-
-    const post: Post = {
-      id: Date.now().toString(),
-      author: currentUser,
-      title: newPost.title,
-      content: newPost.content,
-      category: newPost.category,
-      replies: 0,
-      views: 0,
-      timestamp: new Date()
-    };
-
-    const updatedPosts = [post, ...posts];
-    setPosts(updatedPosts);
-    saveToLocalStorage("forumPosts", updatedPosts);
-    setIsNewPostOpen(false);
-    toast({ title: "Пост создан!", description: "Ваш пост опубликован на форуме" });
-    setNewPost({ title: "", content: "", category: "discussions" });
-  };
-
-  const filteredPosts = posts.filter(p => p.category === selectedCategory);
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
       <header className="border-b border-border/50 backdrop-blur-sm bg-background/80 sticky top-0 z-50">
@@ -160,282 +22,156 @@ export default function Index() {
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              {currentUser ? (
-                <>
-                  <Dialog open={isNewPostOpen} onOpenChange={setIsNewPostOpen}>
-                    <DialogTrigger asChild>
-                      <Button className="bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity">
-                        <Icon name="Plus" size={18} className="mr-2" />
-                        Создать тему
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-[600px]">
-                      <DialogHeader>
-                        <DialogTitle>Новая тема</DialogTitle>
-                        <DialogDescription>Создайте новую тему для обсуждения</DialogDescription>
-                      </DialogHeader>
-                      <div className="space-y-4 py-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="category">Раздел</Label>
-                          <select
-                            id="category"
-                            value={newPost.category}
-                            onChange={(e) => setNewPost({ ...newPost, category: e.target.value })}
-                            className="w-full px-3 py-2 bg-input border border-border rounded-md text-foreground"
-                          >
-                            {CATEGORIES.map(cat => (
-                              <option key={cat.id} value={cat.id}>{cat.name}</option>
-                            ))}
-                          </select>
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="title">Заголовок</Label>
-                          <Input
-                            id="title"
-                            placeholder="Введите заголовок темы"
-                            value={newPost.title}
-                            onChange={(e) => setNewPost({ ...newPost, title: e.target.value })}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="content">Содержание</Label>
-                          <Textarea
-                            id="content"
-                            placeholder="Опишите вашу тему подробнее"
-                            rows={6}
-                            value={newPost.content}
-                            onChange={(e) => setNewPost({ ...newPost, content: e.target.value })}
-                          />
-                        </div>
-                      </div>
-                      <Button onClick={handleCreatePost} className="w-full bg-gradient-to-r from-primary to-secondary">
-                        Опубликовать
-                      </Button>
-                    </DialogContent>
-                  </Dialog>
-
-                  <div className="flex items-center gap-2">
-                    <Avatar className="border-2 border-primary">
-                      <AvatarFallback className="bg-primary text-primary-foreground">
-                        {currentUser.avatar}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="text-sm font-medium hidden sm:inline">{currentUser.nickname}</span>
-                  </div>
-                  <Button variant="ghost" size="sm" onClick={handleLogout}>
-                    <Icon name="LogOut" size={18} />
-                  </Button>
-                </>
-              ) : (
-                <Dialog open={isAuthOpen} onOpenChange={setIsAuthOpen}>
-                  <DialogTrigger asChild>
-                    <Button className="bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity">
-                      <Icon name="LogIn" size={18} className="mr-2" />
-                      Вход
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>{authMode === "login" ? "Вход" : "Регистрация"}</DialogTitle>
-                      <DialogDescription>
-                        {authMode === "login" 
-                          ? "Войдите в свой аккаунт" 
-                          : "Создайте новый аккаунт для участия в форуме"}
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4 py-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="username">Логин</Label>
-                        <Input
-                          id="username"
-                          placeholder="Введите логин"
-                          value={authForm.username}
-                          onChange={(e) => setAuthForm({ ...authForm, username: e.target.value })}
-                        />
-                      </div>
-                      {authMode === "register" && (
-                        <div className="space-y-2">
-                          <Label htmlFor="nickname">Никнейм</Label>
-                          <Input
-                            id="nickname"
-                            placeholder="Как вас называть на форуме"
-                            value={authForm.nickname}
-                            onChange={(e) => setAuthForm({ ...authForm, nickname: e.target.value })}
-                          />
-                        </div>
-                      )}
-                      <div className="space-y-2">
-                        <Label htmlFor="password">Пароль</Label>
-                        <Input
-                          id="password"
-                          type="password"
-                          placeholder="Введите пароль"
-                          value={authForm.password}
-                          onChange={(e) => setAuthForm({ ...authForm, password: e.target.value })}
-                        />
-                      </div>
-                    </div>
-                    <Button onClick={handleAuth} className="w-full bg-gradient-to-r from-primary to-secondary">
-                      {authMode === "login" ? "Войти" : "Зарегистрироваться"}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      onClick={() => setAuthMode(authMode === "login" ? "register" : "login")}
-                      className="w-full"
-                    >
-                      {authMode === "login" ? "Нет аккаунта? Регистрация" : "Уже есть аккаунт? Войти"}
-                    </Button>
-                  </DialogContent>
-                </Dialog>
-              )}
-            </div>
+            <nav className="flex items-center gap-4">
+              <Link to="/forum">
+                <Button variant="ghost" className="hover:text-primary">
+                  <Icon name="MessageSquare" size={18} className="mr-2" />
+                  Форум
+                </Button>
+              </Link>
+              <Link to="/forum">
+                <Button className="bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity">
+                  Присоединиться
+                </Button>
+              </Link>
+            </nav>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
-        <section className="mb-12 animate-fade-in">
+      <main className="container mx-auto px-4 py-16">
+        <section className="text-center mb-20 animate-fade-in">
+          <div className="max-w-3xl mx-auto">
+            <Badge className="mb-4 bg-accent text-accent-foreground">
+              <Icon name="Zap" size={14} className="mr-1" />
+              Версия 2.0
+            </Badge>
+            <h2 className="text-5xl font-bold mb-6 bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
+              Добро пожаловать на ServerHub
+            </h2>
+            <p className="text-xl text-muted-foreground mb-8">
+              Официальный портал игрового сервера. Присоединяйся к сообществу, участвуй в обсуждениях и следи за новостями!
+            </p>
+            <div className="flex gap-4 justify-center">
+              <Link to="/forum">
+                <Button size="lg" className="bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity">
+                  <Icon name="MessageSquare" size={20} className="mr-2" />
+                  Перейти на форум
+                </Button>
+              </Link>
+              <Button size="lg" variant="outline" className="border-primary/50 hover:border-primary">
+                <Icon name="Info" size={20} className="mr-2" />
+                О сервере
+              </Button>
+            </div>
+          </div>
+        </section>
+
+        <section className="mb-20 animate-fade-in" style={{ animationDelay: '0.1s' }}>
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <Card className="border-primary/20 hover:border-primary/50 transition-all hover:shadow-lg hover:shadow-primary/10">
+              <CardHeader>
+                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-primary to-primary/50 flex items-center justify-center mb-4">
+                  <Icon name="Users" size={24} className="text-white" />
+                </div>
+                <CardTitle className="text-2xl">1,234</CardTitle>
+                <CardDescription>Активных игроков</CardDescription>
+              </CardHeader>
+            </Card>
+
+            <Card className="border-secondary/20 hover:border-secondary/50 transition-all hover:shadow-lg hover:shadow-secondary/10">
+              <CardHeader>
+                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-secondary to-secondary/50 flex items-center justify-center mb-4">
+                  <Icon name="MessageSquare" size={24} className="text-white" />
+                </div>
+                <CardTitle className="text-2xl">15,678</CardTitle>
+                <CardDescription>Сообщений на форуме</CardDescription>
+              </CardHeader>
+            </Card>
+
+            <Card className="border-accent/20 hover:border-accent/50 transition-all hover:shadow-lg hover:shadow-accent/10">
+              <CardHeader>
+                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-accent to-accent/50 flex items-center justify-center mb-4">
+                  <Icon name="Trophy" size={24} className="text-white" />
+                </div>
+                <CardTitle className="text-2xl">50+</CardTitle>
+                <CardDescription>Ивентов проведено</CardDescription>
+              </CardHeader>
+            </Card>
+
+            <Card className="border-green-500/20 hover:border-green-500/50 transition-all hover:shadow-lg hover:shadow-green-500/10">
+              <CardHeader>
+                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-green-500 to-green-500/50 flex items-center justify-center mb-4">
+                  <Icon name="Activity" size={24} className="text-white" />
+                </div>
+                <CardTitle className="text-2xl">Online</CardTitle>
+                <CardDescription>Статус сервера</CardDescription>
+              </CardHeader>
+            </Card>
+          </div>
+        </section>
+
+        <section className="mb-20 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+          <div className="text-center mb-12">
+            <h3 className="text-3xl font-bold mb-4">Возможности сервера</h3>
+            <p className="text-muted-foreground">Что мы предлагаем нашим игрокам</p>
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-8">
+            <Card className="border-primary/20 bg-card/50 backdrop-blur">
+              <CardHeader>
+                <Icon name="Shield" size={32} className="text-primary mb-4" />
+                <CardTitle>Защита от читеров</CardTitle>
+                <CardDescription>
+                  Мощная античит система и активная модерация обеспечивают честную игру для всех
+                </CardDescription>
+              </CardHeader>
+            </Card>
+
+            <Card className="border-secondary/20 bg-card/50 backdrop-blur">
+              <CardHeader>
+                <Icon name="Rocket" size={32} className="text-secondary mb-4" />
+                <CardTitle>Высокая производительность</CardTitle>
+                <CardDescription>
+                  Мощное оборудование и оптимизация гарантируют стабильный FPS и низкий пинг
+                </CardDescription>
+              </CardHeader>
+            </Card>
+
+            <Card className="border-accent/20 bg-card/50 backdrop-blur">
+              <CardHeader>
+                <Icon name="Heart" size={32} className="text-accent mb-4" />
+                <CardTitle>Дружное сообщество</CardTitle>
+                <CardDescription>
+                  Тысячи активных игроков, регулярные ивенты и поддержка 24/7
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          </div>
+        </section>
+
+        <section className="text-center animate-fade-in" style={{ animationDelay: '0.3s' }}>
           <Card className="border-primary/20 bg-gradient-to-br from-card to-card/50 backdrop-blur overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-secondary/10 opacity-50" />
-            <CardHeader className="relative">
-              <div className="flex items-start justify-between">
-                <div>
-                  <CardTitle className="text-3xl mb-2">Добро пожаловать на ServerHub!</CardTitle>
-                  <CardDescription className="text-base">
-                    Официальный форум и информационный портал игрового сервера
-                  </CardDescription>
-                </div>
-                <Badge className="bg-accent text-accent-foreground">
-                  <Icon name="Users" size={14} className="mr-1" />
-                  Онлайн: 247
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="relative">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Icon name="MessageSquare" size={20} className="text-primary" />
-                    <span className="text-2xl font-bold">{posts.length}</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">Тем на форуме</p>
-                </div>
-                <div className="p-4 rounded-lg bg-secondary/10 border border-secondary/20">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Icon name="Users" size={20} className="text-secondary" />
-                    <span className="text-2xl font-bold">1,234</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">Участников</p>
-                </div>
-                <div className="p-4 rounded-lg bg-accent/10 border border-accent/20">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Icon name="TrendingUp" size={20} className="text-accent" />
-                    <span className="text-2xl font-bold">15,678</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">Сообщений</p>
-                </div>
-                <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Icon name="Activity" size={20} className="text-green-500" />
-                    <span className="text-2xl font-bold">Online</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">Статус сервера</p>
-                </div>
+            <CardContent className="relative py-16">
+              <h3 className="text-3xl font-bold mb-4">Готов начать играть?</h3>
+              <p className="text-muted-foreground mb-8 max-w-2xl mx-auto">
+                Присоединяйся к нашему серверу прямо сейчас! Зарегистрируйся на форуме и получи бонусы для новичков
+              </p>
+              <div className="flex gap-4 justify-center">
+                <Link to="/forum">
+                  <Button size="lg" className="bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity">
+                    <Icon name="Gamepad2" size={20} className="mr-2" />
+                    Начать играть
+                  </Button>
+                </Link>
+                <Button size="lg" variant="outline" className="border-primary/50 hover:border-primary">
+                  <Icon name="Download" size={20} className="mr-2" />
+                  Скачать клиент
+                </Button>
               </div>
             </CardContent>
           </Card>
-        </section>
-
-        <section className="animate-fade-in" style={{ animationDelay: '0.1s' }}>
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold mb-2">Форум сообщества</h2>
-            <p className="text-muted-foreground">Общайтесь, задавайте вопросы и делитесь опытом</p>
-          </div>
-
-          <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="space-y-6">
-            <TabsList className="grid grid-cols-2 md:grid-cols-5 gap-2 bg-transparent h-auto p-0">
-              {CATEGORIES.map(cat => (
-                <TabsTrigger
-                  key={cat.id}
-                  value={cat.id}
-                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-secondary data-[state=active]:text-white border border-border/50 hover:border-primary/50 transition-all"
-                >
-                  <Icon name={cat.icon as any} size={16} className="mr-2" />
-                  <span className="hidden sm:inline">{cat.name}</span>
-                  <span className="sm:hidden">{cat.name.slice(0, 3)}</span>
-                </TabsTrigger>
-              ))}
-            </TabsList>
-
-            {CATEGORIES.map(cat => (
-              <TabsContent key={cat.id} value={cat.id} className="space-y-4">
-                {filteredPosts.length === 0 ? (
-                  <Card className="border-dashed">
-                    <CardContent className="py-12 text-center">
-                      <Icon name="MessageSquareOff" size={48} className="mx-auto mb-4 text-muted-foreground opacity-50" />
-                      <p className="text-muted-foreground">Пока нет тем в этом разделе</p>
-                      <p className="text-sm text-muted-foreground mt-2">Будьте первым, кто создаст тему!</p>
-                    </CardContent>
-                  </Card>
-                ) : (
-                  filteredPosts.map(post => (
-                    <Card
-                      key={post.id}
-                      className="hover:border-primary/50 transition-all hover:shadow-lg hover:shadow-primary/10 cursor-pointer group"
-                    >
-                      <CardContent className="p-6">
-                        <div className="flex gap-4">
-                          <Avatar className="border-2 border-border group-hover:border-primary transition-colors">
-                            <AvatarFallback className="bg-primary/10 text-primary">
-                              {post.author.avatar}
-                            </AvatarFallback>
-                          </Avatar>
-                          
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-start justify-between gap-4 mb-2">
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 flex-wrap mb-1">
-                                  {post.isPinned && (
-                                    <Badge variant="outline" className="border-accent text-accent">
-                                      <Icon name="Pin" size={12} className="mr-1" />
-                                      Закреплено
-                                    </Badge>
-                                  )}
-                                  <h3 className="text-lg font-semibold group-hover:text-primary transition-colors">
-                                    {post.title}
-                                  </h3>
-                                </div>
-                                <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-                                  {post.content}
-                                </p>
-                              </div>
-                            </div>
-                            
-                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                              <span className="font-medium text-foreground">{post.author.nickname}</span>
-                              <span className="flex items-center gap-1">
-                                <Icon name="MessageCircle" size={14} />
-                                {post.replies}
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <Icon name="Eye" size={14} />
-                                {post.views}
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <Icon name="Clock" size={14} />
-                                {new Date(post.timestamp).toLocaleDateString('ru-RU')}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))
-                )}
-              </TabsContent>
-            ))}
-          </Tabs>
         </section>
       </main>
 
